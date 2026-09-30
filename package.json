@@ -8,7 +8,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "icons": "node scripts/gen-icons.mjs",
-    "tauri": "tauri",
+    "tauri": "GDK_BACKEND=x11 tauri",
     "predev": "cargo build --release -p coucou-hook",
     "prebuild": "cargo build --release -p coucou-hook",
     "pack": "tauri build && node scripts/pack.mjs"
