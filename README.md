@@ -2,15 +2,16 @@
 
 <img src="src-tauri/icons/128x128.png" width="96" alt="Coucou icon">
 
-# Coucou for Windows
+# Coucou for Linux
 
-**Mochi doesn't get a notch on a PC — so it lives at the top of your screen instead.**
+**A small desktop island for Claude Code, Mochi, and your connected services.**
 
-Approve Claude Code permissions, watch your session work, drop a file, chat with Claude, keep an eye on your services — without leaving what you're doing.
+Coucou lives at the top of your screen and gives you a lightweight way to watch Claude Code sessions, respond to permission requests, chat with Claude, drop files, and keep an eye on connected services without leaving what you're doing.
 
-![Windows 10/11](https://img.shields.io/badge/Windows-10%2F11-0078D4?logo=windows)
-![Tauri 2](https://img.shields.io/badge/Tauri-2-FFC131?logo=tauri&logoColor=black)
+![Linux](https://img.shields.io/badge/Linux-X11%20%2F%20XWayland-FCC624?logo=linux\&logoColor=black)
+![Tauri 2](https://img.shields.io/badge/Tauri-2-FFC131?logo=tauri\&logoColor=black)
 ![Rust](https://img.shields.io/badge/Rust-backend-000?logo=rust)
+![TypeScript](https://img.shields.io/badge/TypeScript-frontend-3178C6?logo=typescript\&logoColor=white)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
 </div>
@@ -19,130 +20,299 @@ Approve Claude Code permissions, watch your session work, drop a file, chat with
 
 ---
 
-## Install
+## Status
 
-The downloadable installer is **temporarily unavailable**. Microsoft Defender
-wrongly flags the unsigned installer as malware (`Trojan:Win32/Wacatac.H!ml`, a
-machine-learning false positive). A report is under review at Microsoft, and the
-installer will be published again once it is cleared and code-signed.
+This repository is the **Linux port of Coucou**.
 
-Until then, [build it yourself](#build-it-yourself): it takes a few minutes and
-installs for the current user only — no admin prompt.
+The current implementation is working on **X11** and on **Wayland sessions through XWayland**.
+
+Native Wayland window management is not supported yet. Coucou currently relies on X11/XWayland for the top-center positioning and always-on-top behavior required by the desktop island.
+
+Linux packaging and a finished installer are still work in progress.
+
+## What is Coucou?
+
+Coucou is a desktop companion built around **Mochi**, a small animated character that lives in a compact top-center island.
+
+Instead of opening another large application window every time something happens, Coucou keeps useful information in a small overlay that expands when you need it.
+
+It can:
+
+* Show Claude Code session activity
+* Display Claude Code permission requests
+* Let you allow or deny requests
+* Provide a compact chat interface for Claude
+* Accept files dragged onto the island
+* Display integration updates
+* Open project folders in VS Code
+* Provide a system tray menu
+* Automatically collapse when inactive
+* Wake again from its small top-edge strip
 
 ## Using it
 
-<img src="screenshots/compact.png" width="292" alt="The compact island, with the integration pills as mini Mochis">
-<img src="screenshots/overview.png" width="640" alt="The overview: the focused integration on the left, the other pills on the right">
-<img src="screenshots/approval.png" width="640" alt="A Claude Code permission request, with Deny and Allow">
+<img src="screenshots/compact.png" width="292" alt="The compact island, with integration pills as mini Mochis">
+<img src="screenshots/overview.png" width="640" alt="The overview with the focused integration and other service pills">
+<img src="screenshots/approval.png" width="640" alt="A Claude Code permission request with Deny and Allow">
 <img src="screenshots/chat.png" width="640" alt="Chatting with Claude from the island">
-<img src="screenshots/drop.png" width="640" alt="Mochi turned into a box, waiting for a file">
+<img src="screenshots/drop.png" width="640" alt="Mochi waiting for a dropped file">
 
-| What you do | What happens |
-|---|---|
-| Move the mouse to the very top-centre of the screen | Mochi peeks out |
-| Click the small island | It opens |
-| Click Mochi | It gets annoyed. Three times in a row and it goes dizzy |
-| Rest the pointer on Mochi for two seconds | Hearts |
-| Drag a file onto the island | Mochi turns into a box, swallows it, then offers to answer questions about it |
-| `Esc` | Closes the island |
-| Tray icon | Open, Settings…, Pause, Quit |
+| What you do                           | What happens                                         |
+| ------------------------------------- | ---------------------------------------------------- |
+| Move the mouse to the top-center area | Mochi wakes the island                               |
+| Click the island                      | It expands                                           |
+| Click Mochi                           | Mochi reacts                                         |
+| Hover over Mochi                      | Interactive reactions can appear                     |
+| Drag a file onto the island           | The file is received and can be used as chat context |
+| `Esc`                                 | Closes the expanded island                           |
+| Tray icon                             | Open, Settings, Pause, or Quit                       |
 
-Everything else happens on its own: a Claude Code permission request opens the
-island with **Deny / Allow**, a finished session shows what it did, and
-your integrations sit in the coloured pills next to Mochi.
+Claude Code events can also open the island automatically when something requires attention.
 
 ## Claude Code
 
-<img src="screenshots/settings.png" width="562" alt="The settings window">
+<img src="screenshots/settings.png" width="562" alt="Coucou Settings window">
 
-Open **Settings… → Claude Code → Install hooks…**. You get the exact diff of what
-will change in `%USERPROFILE%\.claude\settings.json`, the path of the dated backup
-that will be taken, and nothing is written until you click. Your own hooks are
-never touched, and uninstalling removes only Coucou's entries.
+Coucou integrates with Claude Code through its hook system.
 
-The relay is a tiny executable, `coucou-hook.exe`, copied to
-`%LOCALAPPDATA%\Coucou\bin\` at launch. It is given 300 ms to reach Coucou and
-exits cleanly if the app is closed, slow or crashed — **a Claude Code session is
-never blocked or slowed down by Coucou.** If nobody answers a permission request
-in time, Coucou stays quiet and Claude Code asks in the terminal as usual.
+Open **Settings → Claude Code → Install hooks** to review the changes before they are written to your Claude Code configuration.
 
-It works from any terminal — Windows Terminal, PowerShell, VS Code, Git Bash.
+The Linux hook relay communicates with Coucou through a Unix domain socket:
 
-## Chat and keys
+```text
+$XDG_RUNTIME_DIR/coucou.sock
+```
 
-**Settings… → Claude** takes your Anthropic API key. Keys live in the **Windows
-Credential Manager**, never on disk and never in the interface — the island can
-only ask whether a key exists. Same for every integration key.
+A temporary `/tmp` location is used when the runtime directory is unavailable.
 
-No telemetry. The only network requests Coucou makes are to the services you
-configure yourself.
+The relay is designed to fail gracefully if Coucou is unavailable, so Claude Code can continue working normally.
 
-## Build it yourself
+Coucou can receive Claude Code events including session activity, tool usage, notifications, permission requests, and completion events.
 
-You need [Rust](https://rustup.rs), [Node 20+](https://nodejs.org), and the
-**MSVC build tools** (Visual Studio Build Tools with "Desktop development with
-C++"). WebView2 ships with Windows 10/11.
+For permission requests, Coucou can present **Allow** and **Deny** controls directly in the island.
 
-```powershell
-cd windows
+The Claude Code configuration is normally located at:
+
+```text
+~/.claude/settings.json
+```
+
+Coucou previews hook changes before applying them and aims to modify only its own entries.
+
+## Chat and credentials
+
+Coucou includes a compact Claude chat interface.
+
+The Anthropic API key is handled by the Rust backend rather than being exposed directly to the frontend.
+
+Credentials for supported services are stored through the system keyring.
+
+Current credential integrations include:
+
+* Anthropic
+* GitHub
+* Vercel
+* Stripe
+* Resend
+* Notion
+* Cal.com
+* n8n
+
+No API keys are included in this repository.
+
+## Integrations
+
+Coucou currently includes integration support for:
+
+* GitHub
+* Vercel
+* Stripe
+* Resend
+* Notion
+* Cal.com
+* n8n
+
+Integration cards can appear alongside Mochi and can be configured through Settings.
+
+## File drop
+
+Files can be dragged onto the island.
+
+Coucou receives the dropped file, copies it into its local inbox, and can use it as context for a Claude chat interaction.
+
+A development upload preview is also included:
+
+```text
+dev/upload-preview.html
+```
+
+This makes it possible to work on the file-drop animation without performing a real desktop drag for every test.
+
+## Settings
+
+The Settings window provides controls for:
+
+* Claude configuration
+* Integration credentials
+* Enabled integrations
+* Sound
+* Volume
+* Automatic closing
+* Autostart
+* Claude Code hooks
+
+## Linux desktop behavior
+
+The main island window is a transparent, borderless desktop overlay positioned at the top-center of the primary display.
+
+The current Linux implementation uses X11/XWayland because the application needs desktop window behavior that the current native Wayland implementation does not provide.
+
+When running from the development environment, the project automatically starts Tauri with:
+
+```text
+GDK_BACKEND=x11
+```
+
+This allows Coucou to work from a normal Wayland desktop session through XWayland.
+
+Native Wayland support is planned for a future stage of the port.
+
+## Build and run
+
+### Requirements
+
+You need:
+
+* Linux
+* X11 or XWayland
+* Rust
+* Node.js 20+
+* The Linux development libraries required by Tauri/WebKitGTK
+
+For Claude Code integration, Claude Code should also be installed and configured.
+
+Install JavaScript dependencies:
+
+```bash
 npm install
-npm run tauri dev      # live-reloading development build
-npm run pack           # builds the installer and drops it in windows/release/
 ```
 
-`npm run dev` alone serves the front end in an ordinary browser, which is enough
-to work on the island's looks. It also serves `dev/upload-preview.html`, which
-replays the whole file-drop choreography on a loop — the one part of the UI that
-otherwise needs a real drag from Explorer to see. Neither page ships in the app.
+Run the desktop application:
 
-`npm run pack` leaves two files in `windows/release/`, the same names the release
-workflow publishes:
-
-```
-Coucou-Windows-X.Y.Z-setup.exe    the versioned installer
-Coucou-Windows-setup.exe          the same file under the rolling name
+```bash
+npm run tauri dev
 ```
 
-Installing is optional — `target/release/coucou.exe` runs on its own. There is no
-window in the taskbar and no console: the island at the top of the screen and the
-Mochi in the notification area are the whole app, and Quit lives in its menu.
+Build the frontend:
 
-The 28 sounds are the macOS app's own files; they are never duplicated in this
-folder. The path is declared once, in `SOUNDS_DIR` at the top of
-`vite.config.ts` — when they move to `shared/sounds/`, change that one line.
-
-The app icon and the tray icon are drawn in code, like Mochi itself:
-
-```powershell
-npm run icons          # regenerates src-tauri/icons from scripts/gen-icons.mjs
+```bash
+npm run build
 ```
 
-### Layout
+Run the frontend by itself:
 
-```
-windows/
-  src/                 island front end (TypeScript, no framework)
-    mochi/             Mochi and the launch greeting, in Canvas 2D
-    island/            state machine, hooks, integrations
-    views/             every island view
-    settings/          the settings window
-  src-tauri/           Rust backend: window, named pipe, Claude API, pollers
-  hook/                coucou-hook.exe, the Claude Code relay
-  scripts/             icon generator
+```bash
+npm run dev
 ```
 
-### Log
+The browser-only development mode is useful for working on the island UI without starting the Tauri desktop shell.
 
-`%LOCALAPPDATA%\Coucou\coucou.log` — hook events, permission decisions, poller
-problems. It stays on your machine.
+## Project structure
 
-## What's different from the Mac version
+```text
+.
+├── src/
+│   ├── core/             Shared state, layout, bridge and sound
+│   ├── island/           Island UI, input and state machine
+│   ├── mochi/            Mochi rendering and animation
+│   ├── views/            Island views
+│   ├── settings/         Settings frontend
+│   └── upload/           File-drop animation
+│
+├── src-tauri/
+│   ├── src/
+│   │   ├── claude.rs     Claude API/chat logic
+│   │   ├── hooks.rs      Claude Code hook management
+│   │   ├── integrations.rs
+│   │   ├── island.rs     Native desktop window behavior
+│   │   ├── pipe.rs       Unix-socket communication
+│   │   ├── secrets.rs    System keyring credentials
+│   │   └── ...
+│   └── tauri.conf.json
+│
+├── hook/                 Claude Code hook relay
+├── screenshots/          UI screenshots
+├── scripts/              Build helpers
+├── index.html            Main island entry point
+└── settings.html         Settings entry point
+```
 
-- No notch, so the island lives at the top centre of the screen and retracts into
-  the top edge instead of hiding in a notch.
-- Permission approval works from **any** terminal; the Mac build only listens to
-  VS Code sessions.
-- Not in this version: sending a file by email, dragging Mochi onto a window to
-  attach it as context, and jumping to a specific terminal window — "Open
-  terminal" opens the working folder in VS Code when `code` is on your `PATH`.
-- Cal.com shows the next bookings as a list rather than the Mac's calendar.
+## Technology
+
+Coucou uses:
+
+* **Tauri 2** for the desktop shell
+* **Rust** for the backend
+* **TypeScript** for the frontend
+* **Vite** for the frontend build
+* **Canvas 2D** for Mochi and visual animations
+* **Tokio** for asynchronous IPC
+* **Reqwest** for network requests
+* **System keyring support** for credentials
+
+The frontend is implemented directly in TypeScript without a large UI framework.
+
+Rust handles the platform-facing parts of the application, including Claude communication, integrations, secrets, hooks, IPC, settings, and the system tray.
+
+## Development notes
+
+Generated files are intentionally excluded from the repository.
+
+These include:
+
+```text
+node_modules/
+dist/
+target/
+```
+
+Local secrets and application data are also excluded.
+
+The repository contains several files retained from the original platform implementation while the Linux port is being cleaned up. Files with names such as `.windows-backup` exist as development references and are not part of the Linux runtime.
+
+## Current limitations
+
+The Linux port is still under development.
+
+Current limitations include:
+
+* Native Wayland window management is not implemented yet.
+* X11/XWayland is currently required for the desktop island behavior.
+* The island currently targets the primary display.
+* A finished Linux installer/package has not been published yet.
+* Some platform-specific legacy source files remain in the repository while the port is being cleaned up.
+* More testing is needed across different Linux distributions and desktop environments.
+
+## Roadmap
+
+The Linux port is being developed incrementally.
+
+Planned work includes:
+
+* Native Wayland window support
+* Better multi-monitor behavior
+* Linux packaging and distribution
+* Further cleanup of legacy platform-specific code
+* Testing across more Linux desktop environments
+
+## About the project
+
+Coucou was originally designed around a macOS-style desktop island concept.
+
+The Linux version keeps the same core idea while replacing platform-specific components with Linux equivalents where practical:
+
+**a small animated assistant that stays at the top of your screen instead of becoming another large application window.**
+
+## License
+
+MIT
